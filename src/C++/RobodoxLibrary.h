@@ -9,8 +9,8 @@
 #define SRC_ROBODOXLIBRARY_H_
 
 
-#include "Drive/Drive.h"
-#include "GyroDrive/GyroDrive.h"
+#include "Drive/Basic_Drive/Drive.h"
+#include "Drive/Gyro_Drive/GyroDrive.h"
 
 
 #endif /* SRC_ROBODOXLIBRARY_H_ */

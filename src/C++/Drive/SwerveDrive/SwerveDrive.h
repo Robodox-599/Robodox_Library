@@ -23,12 +23,12 @@ public:
 	void updateRightMotors(float speed);
 
 	void setForwardSpeed(float rawY);
-	void setTurnSpeed(float rawX);
+	void setTurnSpeed(float rawX, int pov);
 	void setTriggerSpeed(float triggerR, float triggerL);
 
 	void drive(float xAxis, float yAxis, int POV);
 
-	void setReferenceAngle(int angle);
+	float setReferenceAngle(int angle, float current);
 	void edgeCase(int change);
 	float shortestPath(float e1, float e2);
 	float linearizeDrive(float driveInput);

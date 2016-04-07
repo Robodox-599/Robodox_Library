@@ -20,13 +20,8 @@ SwerveDrive::SwerveDrive()
 	driveLeft = 0;
 	driveRight = 0;
 
-	error360 = 0;
-	error180 = 0;
-
 	navX->ZeroYaw();
 	autoTurn = false;
-	gyroValue = navX->GetYaw();
-	referenceAngle = navX->GetYaw();
 
 	trigR = 0;
 	trigL = 0;
@@ -113,7 +108,7 @@ void SwerveDrive::setForwardSpeed(float forward)
  * setTurnSpeed: update turn speed with joystick input and does PID (straight SwerveDrive)
  * @param turn is the joystick x-axis
  */
-void SwerveDrive::setTurnSpeed(float turn)
+void SwerveDrive::setTurnSpeed(float turn, int pov)
 {
 	if(turn >= DEADZONE || turn <= -DEADZONE)
 	{
@@ -121,20 +116,22 @@ void SwerveDrive::setTurnSpeed(float turn)
 
 		autoTurn = false;
 
-		referenceAngle = 0;
+		desiredValue = 0;
 		navX->ZeroYaw();
-	}
-	else if((error360 <= -.5 || error360 >= .5) && (error180 <= -.5 || error180 >= .5))
-	{
-		turnSpeed = KP * shortestPath();
 	}
 	else
 	{
-		turnSpeed = 0;
-		autoTurn = false;
-		navX->ZeroYaw();
-		gyroValue = 0;
-		referenceAngle = 0;
+		turnSpeed = PID(desiredValue, navX->GetYaw(), 0);
+
+		autoTurn = true;
+
+		if(turnSpeed == 0)
+		{
+			autoTurn = false;
+			desiredValue = 0;
+			alteredValue = 0;
+			navX->ZeroYaw();
+		}
 	}
 }
 
@@ -146,46 +143,38 @@ void SwerveDrive::setTurnSpeed(float turn)
  */
 void SwerveDrive::drive(float xAxis, float yAxis, int POV)//make sure POV is on the scale from -180 to 180
 {
-	gyroValue = navX->GetYaw();
-
-	edgeCase();
-	setReferenceAngle(POV);
-
-	error360 = referenceAngle - gyroValue;
-	error180 = referenceAngle - navX->GetYaw();
-
-	shortestPath();
-
 	setForwardSpeed(yAxis);
-	setTurnSpeed(xAxis);
+	setTurnSpeed(xAxis, POV);
 
 	updateLeftMotors(forwardSpeed - turnSpeed - trigL);
 	updateRightMotors(forwardSpeed + turnSpeed - trigR);
 }
 
-void SwerveDrive::setReferenceAngle(int angle)//make sure angle is on the scale from -180 to 180
+float SwerveDrive::setReferenceAngle(int angle, float current)//make sure angle is on the scale from -180 to 360
 {
 	if(angle == -1)
 	{
-
+		return current;
 	}
 	else if(angle > 180)
 	{
-		referenceAngle = angle - 360;
+		return angle - 360;
 		autoTurn = true;
 	}
 	else if(angle <= 180)
 	{
-		referenceAngle = angle;
+		return angle;
 		autoTurn = true;
 	}
+
+	return current;
 }
 
 void SwerveDrive::edgeCase(int change)
 {
 	if(alteredValue < 0)
 	{
-		alteredValue += 360;
+		alteredValue += change;
 	}
 }
 
@@ -203,7 +192,7 @@ float SwerveDrive::shortestPath(float e1, float e2)
 
 float SwerveDrive::PID(float desired, float current, float kp)
 {
-	//use kp to decided alt value
+	alteredValue = current;
 
 	if(kp == 1)
 	{
@@ -219,7 +208,7 @@ float SwerveDrive::PID(float desired, float current, float kp)
 
 	if((error1 <= -.5 || error1 >= .5) && (error2 <= -.5 || error2 >= .5))
 	{
-		return turnSpeed = kp * shortestPath(error1, error2);
+		return kp * shortestPath(error1, error2);
 	}
 	return 0;
 }
