@@ -36,7 +36,7 @@ public:
 	void driveMotors(float turn, float fwd);
 //--------------------------------------------------
 	float PID(float desired, float current, float kp);
-	float shortest(float e1, float e2);//shortest path function
+	void setSwerve(float );
 
 	AHRS* navX;
 
@@ -67,7 +67,7 @@ private:
 	CANTalon* frontRightSwerve;
 	CANTalon* backRightSwerve;
 
-
+	Encoder* encoder;
 };
 
 
