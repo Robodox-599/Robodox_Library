@@ -14,6 +14,11 @@
 #define BACK_LEFT_MOTOR_PORT 		(3)
 #define BACK_RIGHT_MOTOR_PORT 		(4)
 
+#define FRONT_LEFT_SWERVE_PORT 		(5)
+#define FRONT_RIGHT_SWERVE_PORT 	(6)
+#define BACK_LEFT_SWERVE_PORT 		(7)
+#define BACK_RIGHT_SWERVE_PORT 		(8)
+
 #define DEADZONE					(.3)
 
 //~~~Gyro Drive~~~

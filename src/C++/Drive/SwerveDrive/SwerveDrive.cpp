@@ -1,33 +1,43 @@
-#include "GyroDrive.h"
+#include "SwerveDrive.h"
 
-Drive::Drive()
+SwerveDrive::SwerveDrive()
 {
 	frontLeftDrive = new CANTalon(FRONT_LEFT_MOTOR_PORT);
 	backLeftDrive = new CANTalon(BACK_LEFT_MOTOR_PORT);
 	frontRightDrive = new CANTalon(FRONT_RIGHT_MOTOR_PORT);
 	backRightDrive = new CANTalon(BACK_RIGHT_MOTOR_PORT);
 
+	frontLeftSwerve = new CANTalon(FRONT_LEFT_SWERVE_PORT);
+	backLeftSwerve = new CANTalon(BACK_LEFT_SWERVE_PORT);
+	frontRightSwerve = new CANTalon(FRONT_RIGHT_SWERVE_PORT);
+	backRightSwerve = new CANTalon(BACK_RIGHT_SWERVE_PORT);
+
 	navX = new AHRS(SPI::Port::kMXP);
 
-	forwardSpeed = 0;//
-	turnSpeed = 0;//
+	forwardSpeed = 0;
+	turnSpeed = 0;
 
 	driveLeft = 0;
 	driveRight = 0;
 
-	error360 = 0;//
-	error180 = 0;//
+	error360 = 0;
+	error180 = 0;
 
-	navX->ZeroYaw();//
-	autoTurn = false;//
-	gyroValue = navX->GetYaw();//
-	referenceAngle = navX->GetYaw();//
+	navX->ZeroYaw();
+	autoTurn = false;
+	gyroValue = navX->GetYaw();
+	referenceAngle = navX->GetYaw();
 
 	trigR = 0;
 	trigL = 0;
+//--------------------------
+	error1 = 0;
+	error2 = 0;
+	alteredValue = 0;
+	desiredValue = 0;
 }
 
-Drive::~Drive()
+SwerveDrive::~SwerveDrive()
 {
 	delete frontLeftDrive;
 	delete backLeftDrive;
@@ -46,7 +56,7 @@ Drive::~Drive()
  * updateLeftMotors: set left motors to desired speed
  * @param speed is the desired speed input
  */
-void Drive::updateLeftMotors(float speed)
+void SwerveDrive::updateLeftMotors(float speed)
 {
 	frontLeftDrive->Set(-speed);
 	backLeftDrive->Set(-speed);
@@ -56,13 +66,13 @@ void Drive::updateLeftMotors(float speed)
  * updateRightMotors: set right motors to desired speed; reverses right motors
  * @param speed is the desired speed input
  */
-void Drive::updateRightMotors(float speed)
+void SwerveDrive::updateRightMotors(float speed)
 {
 	frontRightDrive->Set(speed);
 	backRightDrive->Set(speed);
 }
 
-void Drive::setTriggerSpeed(float triggerR, float triggerL)
+void SwerveDrive::setTriggerSpeed(float triggerR, float triggerL)
 {
 	if(triggerR > DEADZONE)
 	{
@@ -87,7 +97,7 @@ void Drive::setTriggerSpeed(float triggerR, float triggerL)
  * setForwardSpeed: update forward speed with joystick input
  * @param speed is the joystick y-axis
  */
-void Drive::setForwardSpeed(float forward)
+void SwerveDrive::setForwardSpeed(float forward)
 {
 	if(forward >= DEADZONE || forward <= -DEADZONE)
 	{
@@ -100,10 +110,10 @@ void Drive::setForwardSpeed(float forward)
 }
 
 /**
- * setTurnSpeed: update turn speed with joystick input and does PID (straight drive)
+ * setTurnSpeed: update turn speed with joystick input and does PID (straight SwerveDrive)
  * @param turn is the joystick x-axis
  */
-void Drive::setTurnSpeed(float turn)
+void SwerveDrive::setTurnSpeed(float turn)
 {
 	if(turn >= DEADZONE || turn <= -DEADZONE)
 	{
@@ -129,12 +139,12 @@ void Drive::setTurnSpeed(float turn)
 }
 
 /**
- * drive: get desired speed values and assign them to motors
+ * SwerveDrive: get desired speed values and assign them to motors
  * @param turn is the turn speed
  * @param fwd is the fwd/backward speed
  *
  */
-void Drive::drive(float xAxis, float yAxis, int POV)//make sure POV is on the scale from -180 to 180
+void SwerveDrive::drive(float xAxis, float yAxis, int POV)//make sure POV is on the scale from -180 to 180
 {
 	gyroValue = navX->GetYaw();
 
@@ -153,7 +163,7 @@ void Drive::drive(float xAxis, float yAxis, int POV)//make sure POV is on the sc
 	updateRightMotors(forwardSpeed + turnSpeed - trigR);
 }
 
-void Drive::setReferenceAngle(int angle)//make sure angle is on the scale from -180 to 180
+void SwerveDrive::setReferenceAngle(int angle)//make sure angle is on the scale from -180 to 180
 {
 	if(angle == -1)
 	{
@@ -171,20 +181,45 @@ void Drive::setReferenceAngle(int angle)//make sure angle is on the scale from -
 	}
 }
 
-void Drive::edgeCase()
+void SwerveDrive::edgeCase(int change)
 {
-	if(gyroValue < 0)
+	if(alteredValue < 0)
 	{
-		gyroValue += 360;
+		alteredValue += 360;
 	}
 }
 
-float Drive::shortestPath()
+float SwerveDrive::shortestPath(float e1, float e2)
 {
-	if(std::abs(error180) < std::abs(error360))
+	if(std::abs(e1) < std::abs(e2))
 	{
-		return error180;
+		return e1;
 	}
 
-	return error360;
+	return e2;
+}
+
+//------------------------------
+
+float SwerveDrive::PID(float desired, float current, float kp)
+{
+	//use kp to decided alt value
+
+	if(kp == 1)
+	{
+		edgeCase(180);//change
+	}
+	else if(kp == 0)
+	{
+		edgeCase(360);//change
+	}
+
+	error1 = desired - current;
+	error2 = desired - alteredValue;
+
+	if((error1 <= -.5 || error1 >= .5) && (error2 <= -.5 || error2 >= .5))
+	{
+		return turnSpeed = kp * shortestPath(error1, error2);
+	}
+	return 0;
 }
