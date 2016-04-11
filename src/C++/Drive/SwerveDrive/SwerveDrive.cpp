@@ -1,5 +1,6 @@
 #include "SwerveDrive.h"
 
+
 SwerveDrive::SwerveDrive()
 {
 	frontLeftDrive = new CANTalon(FRONT_LEFT_MOTOR_PORT);
@@ -30,6 +31,8 @@ SwerveDrive::SwerveDrive()
 	error2 = 0;
 	alteredValue = 0;
 	desiredValue = 0;
+
+	swerveAngle = 0;
 }
 
 SwerveDrive::~SwerveDrive()
@@ -108,7 +111,7 @@ void SwerveDrive::setForwardSpeed(float forward)
  * setTurnSpeed: update turn speed with joystick input and does PID (straight SwerveDrive)
  * @param turn is the joystick x-axis
  */
-void SwerveDrive::setTurnSpeed(float turn, int pov)
+void SwerveDrive::setTurnSpeed(float turn)
 {
 	if(turn >= DEADZONE || turn <= -DEADZONE)
 	{
@@ -141,10 +144,14 @@ void SwerveDrive::setTurnSpeed(float turn, int pov)
  * @param fwd is the fwd/backward speed
  *
  */
-void SwerveDrive::drive(float xAxis, float yAxis, int POV)//make sure POV is on the scale from -180 to 180
+void SwerveDrive::drive(float xAxisR, float yAxisR, float yaxisL, int POV)//make sure POV is on the scale from -180 to 180
 {
+	desiredValue = setReferenceAngle(POV, navX->GetAngle());
+
 	setForwardSpeed(yAxis);
-	setTurnSpeed(xAxis, POV);
+	setTurnSpeed(xAxis);
+
+	setSwerve(yAxisL);
 
 	updateLeftMotors(forwardSpeed - turnSpeed - trigL);
 	updateRightMotors(forwardSpeed + turnSpeed - trigR);
@@ -189,6 +196,25 @@ float SwerveDrive::shortestPath(float e1, float e2)
 }
 
 //------------------------------
+
+void SwerveDrive::setSwerve(float Y)
+{
+	swerveAngle = 360*frontLeftSwerve->GetEncPosition()/1023;		//converting encoder input to degrees using proportions
+	desiredValue = 360*asin(Y)/(2*acos(-1));						//calculating angle in terms of left y axis input using arc sine, then converting angle to degrees
+	frontLeftSwerve->Set(PID(desiredValue, swerveAngle, 1));
+
+	swerveAngle = 360*frontRightSwerve->GetEncPosition()/1023;
+	desiredValue = (360*asin(Y)/(2*acos(-1)));
+	frontRightSwerve->Set(PID(desiredValue, swerveAngle, 1));
+
+	swerveAngle = 360*backLeftSwerve->GetEncPosition()/1023;
+	desiredValue = (360*asin(Y)/(2*acos(-1)));
+	backLeftSwerve->Set(PID(desiredValue, swerveAngle, 1));
+
+	swerveAngle = 360*backRightSwerve->GetEncPosition()/1023;
+	desiredValue = (360*asin(Y)/(2*acos(-1)));
+	backRightSwerve->Set(PID(desiredValue, swerveAngle, 1));
+}
 
 float SwerveDrive::PID(float desired, float current, float kp)
 {

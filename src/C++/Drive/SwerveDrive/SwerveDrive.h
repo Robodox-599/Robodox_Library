@@ -10,6 +10,8 @@
 
 #include "wpilib.h"
 
+#include "cMath"
+
 #include "../Macros.h"
 #include "AHRS.h"
 
@@ -22,11 +24,11 @@ public:
 	void updateLeftMotors(float speed);
 	void updateRightMotors(float speed);
 
-	void setForwardSpeed(float rawY);
-	void setTurnSpeed(float rawX, int pov);
+	void setForwardSpeed(float forward);
+	void setTurnSpeed(float turn);
 	void setTriggerSpeed(float triggerR, float triggerL);
 
-	void drive(float xAxis, float yAxis, int POV);
+	void drive(float xAxis, float yAxis, float yAxisL,int POV);
 
 	float setReferenceAngle(int angle, float current);
 	void edgeCase(int change);
@@ -36,7 +38,7 @@ public:
 	void driveMotors(float turn, float fwd);
 //--------------------------------------------------
 	float PID(float desired, float current, float kp);
-	void setSwerve(float );
+	void setSwerve(float Y);
 
 	AHRS* navX;
 
@@ -56,6 +58,8 @@ public:
 	float alteredValue;//gyrovalue
 	float desiredValue;//referenceangle
 
+	float swerveAngle;
+
 private:
 	CANTalon* frontLeftDrive;
 	CANTalon* backLeftDrive;
@@ -66,8 +70,6 @@ private:
 	CANTalon* backLeftSwerve;
 	CANTalon* frontRightSwerve;
 	CANTalon* backRightSwerve;
-
-	Encoder* encoder;
 };
 
 
