@@ -124,7 +124,7 @@ void SwerveDrive::setTurnSpeed(float turn)
 	}
 	else
 	{
-		turnSpeed = PID(desiredValue, navX->GetYaw(), 0);
+		turnSpeed = PID(desiredValue, navX->GetYaw(), .2);
 
 		autoTurn = true;
 
@@ -148,8 +148,8 @@ void SwerveDrive::drive(float xAxisR, float yAxisR, float yaxisL, int POV)//make
 {
 	desiredValue = setReferenceAngle(POV, navX->GetAngle());
 
-	setForwardSpeed(yAxis);
-	setTurnSpeed(xAxis);
+	setForwardSpeed(yAxisR);
+	setTurnSpeed(xAxisR);
 
 	setSwerve(yAxisL);
 
@@ -199,34 +199,34 @@ float SwerveDrive::shortestPath(float e1, float e2)
 
 void SwerveDrive::setSwerve(float Y)
 {
-	swerveAngle = 360*frontLeftSwerve->GetEncPosition()/1023;		//converting encoder input to degrees using proportions
+	swerveAngle = 360*alteredEncoder(frontLeftSwerve)/1023;		//converting encoder input to degrees using proportions
 	desiredValue = 360*asin(Y)/(2*acos(-1));						//calculating angle in terms of left y axis input using arc sine, then converting angle to degrees
-	frontLeftSwerve->Set(PID(desiredValue, swerveAngle, 1));
+	frontLeftSwerve->Set(PID(desiredValue, swerveAngle, .1));		//change KP value
 
-	swerveAngle = 360*frontRightSwerve->GetEncPosition()/1023;
-	desiredValue = (360*asin(Y)/(2*acos(-1)));
-	frontRightSwerve->Set(PID(desiredValue, swerveAngle, 1));
+	swerveAngle = 360*alteredEncoder(frontRightSwerve)/1023;		//adjust encoder conversion to match joystick angle
+	desiredValue = (360*asin(Y)/(2*acos(-1)));						//adjust joystick angle to match encoder conversion
+	frontRightSwerve->Set(PID(desiredValue, swerveAngle, .1));
 
-	swerveAngle = 360*backLeftSwerve->GetEncPosition()/1023;
+	swerveAngle = 360*alteredEncoder(backLeftSwerve)/1023;
 	desiredValue = (360*asin(Y)/(2*acos(-1)));
-	backLeftSwerve->Set(PID(desiredValue, swerveAngle, 1));
+	backLeftSwerve->Set(PID(desiredValue, swerveAngle, .1));
 
-	swerveAngle = 360*backRightSwerve->GetEncPosition()/1023;
+	swerveAngle = 360*alteredEncoder(backRightSwerve)/1023;
 	desiredValue = (360*asin(Y)/(2*acos(-1)));
-	backRightSwerve->Set(PID(desiredValue, swerveAngle, 1));
+	backRightSwerve->Set(PID(desiredValue, swerveAngle, .1));
 }
 
 float SwerveDrive::PID(float desired, float current, float kp)
 {
 	alteredValue = current;
 
-	if(kp == 1)
-	{
-		edgeCase(180);//change
-	}
-	else if(kp == 0)
+	if(kp == .1)//change kp value to match different cases
 	{
 		edgeCase(360);//change
+	}
+	else if(kp == .2)
+	{
+		edgeCase(360);//change, test to find out where encoder 0 is
 	}
 
 	error1 = desired - current;
@@ -237,4 +237,9 @@ float SwerveDrive::PID(float desired, float current, float kp)
 		return kp * shortestPath(error1, error2);
 	}
 	return 0;
+}
+
+float SwerveDrive::alteredEncoder(CANTalon* EncoderMotor)
+{
+	return (EncoderMotor->GetEncPosition()%1023)*1023;
 }

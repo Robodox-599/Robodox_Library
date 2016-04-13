@@ -2,7 +2,7 @@
 
 Shooter::Shooter()
 {
-	shooterMotor = new CANTalon(6);//SHOOTER_MOTOR_CHANNEL);
+	shooterMotor = new CANTalon(6);
 	gearPiston = new DoubleSolenoid(GEAR_PISTON_CHANNEL_A, GEAR_PISTON_CHANNEL_B);
 	limit = new DigitalInput(8);
 
@@ -30,13 +30,9 @@ bool Shooter::getLimit()
 
 void Shooter::catapultReset(bool reset)
 {
-	/*if(shooterMotor->GetEncPosition() > 10)
-	{
-		shooterMotor->Set(0);
-	}*/
 	if(reset == true && !getLimit())
 	{
-		shooterMotor->Set(.1); //WARNING: DO NOT MAKE NEGATIVE (and may need to change value)
+		shooterMotor->Set(.5); //WARNING: DO NOT MAKE NEGATIVE (and may need to change value)
 	}
 	else
 	{
@@ -52,14 +48,6 @@ void Shooter::catapultLaunch(bool fwdPiston, bool safety)
 		Wait(2);
 		gearPiston->Set(DoubleSolenoid::Value::kReverse);
 	}
-	/*else if(revPiston)
-	{
-		gearPiston->Set(DoubleSolenoid::Value::kReverse);
-	}
-	else
-	{
-		gearPiston->Set(DoubleSolenoid::Value::kOff);
-	}*/
 }
 
 double Shooter::getMotorSpeed()

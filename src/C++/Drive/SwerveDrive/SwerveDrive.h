@@ -40,6 +40,8 @@ public:
 	float PID(float desired, float current, float kp);
 	void setSwerve(float Y);
 
+	float alteredEncoder(CANTalon* EncoderMotor);//recalculate encoder angle to a range of 0 to 1023
+
 	AHRS* navX;
 
 	float forwardSpeed;
