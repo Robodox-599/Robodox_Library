@@ -20,8 +20,8 @@ public:
 
 	void drive(float xAxis, float yAxis);
 
-	void setForwardSpeed(float rawY);
-	void setTurnSpeed(float rawX);
+	void setForwardSpeed(float forward);
+	void setTurnSpeed(float turn);
 
 	void updateLeftMotors(float speed);
 	void updateRightMotors(float speed);
