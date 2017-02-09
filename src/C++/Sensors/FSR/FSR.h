@@ -10,7 +10,7 @@
 
 #include "WPILib.h"
 
-class FSR
+class FSR	//Force Sensing Resistor: Updated 02/08/2017 NOT TESTED
 {
 
 public:
