@@ -64,6 +64,7 @@ float FSR::returnConductance()
 {
 	returnResistance();
 	fsrConductance = 1000000; //measured in microohms
+	fsrConductance /= fsrResistance;
 
 	return fsrConductance;
 }
